@@ -20,6 +20,7 @@ import {
   setTips,
   resetProgress,
 } from '../lib/storage'
+import { parseCSV } from '../lib/csvParser'
 import { BUILTIN_DRUGS } from '../data/drugs'
 
 const defaultSettings = getSettings()
@@ -136,27 +137,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
-    let drugs = getDrugs()
+    async function loadData() {
+      let drugs = getDrugs()
 
-    // First launch: seed with built-in drugs
-    if (drugs.length === 0) {
-      drugs = BUILTIN_DRUGS
-      setDrugs(drugs)
+      // First launch: try to fetch public/data.csv, fall back to BUILTIN_DRUGS
+      if (drugs.length === 0) {
+        try {
+          const res = await fetch(import.meta.env.BASE_URL + 'data.csv')
+          if (res.ok) {
+            const text = await res.text()
+            const parsed = parseCSV(text)
+            if (parsed.drugs.length > 0) {
+              drugs = parsed.drugs
+            }
+          }
+        } catch { /* network error – fall through */ }
+
+        if (drugs.length === 0) {
+          drugs = BUILTIN_DRUGS
+        }
+        setDrugs(drugs)
+      }
+
+      dispatch({
+        type: 'INIT',
+        payload: {
+          drugs,
+          progress: getProgress(),
+          sessions: getSessions(),
+          retryQueue: getRetryQueue(),
+          streak: getStreak(),
+          settings: getSettings(),
+          favorites: getFavorites(),
+          tips: getTips(),
+        },
+      })
     }
 
-    dispatch({
-      type: 'INIT',
-      payload: {
-        drugs,
-        progress: getProgress(),
-        sessions: getSessions(),
-        retryQueue: getRetryQueue(),
-        streak: getStreak(),
-        settings: getSettings(),
-        favorites: getFavorites(),
-        tips: getTips(),
-      },
-    })
+    loadData()
   }, [])
 
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>

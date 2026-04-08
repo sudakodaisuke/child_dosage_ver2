@@ -231,7 +231,7 @@ export default function SettingsScreen() {
           <h2 className="text-sm font-bold text-gray-700">フィードバック</h2>
           <p className="text-xs text-gray-500">バグ報告・機能要望はこちらからどうぞ</p>
           <a
-            href="https://forms.gle/YOUR_FORM_ID"
+            href="https://forms.gle/bu1jUFy86a1zMLER9"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full btn-secondary text-sm flex items-center justify-center gap-2"

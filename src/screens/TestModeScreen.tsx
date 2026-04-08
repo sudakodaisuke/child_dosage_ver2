@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import TopBar from '../components/layout/TopBar'
 import EmptyState from '../components/common/EmptyState'
+import TipsModal from '../components/drug/TipsModal'
 import { useAppContext } from '../store/AppContext'
 import { buildQuestions, isFreeTextCorrect } from '../lib/testEngine'
 import { applyTestAnswer, getInitialProgress, updateStreak, calcSessionScore } from '../lib/scoring'
@@ -41,6 +42,7 @@ export default function TestModeScreen() {
   const [results, setResults] = useState<QuizResult[]>([])
   const [startTime] = useState(Date.now())
   const [timer, setTimer] = useState(state.settings.timerSeconds)
+  const [tipsOpen, setTipsOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -303,7 +305,28 @@ export default function TestModeScreen() {
             </button>
           </div>
         )}
+
+        {/* みんなの豆知識・ゴロ (shown after answering) */}
+        {answered && (
+          <button
+            onClick={() => setTipsOpen(true)}
+            className="w-full card flex items-center gap-3 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+          >
+            <svg className="w-5 h-5 text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700">みんなの豆知識・ゴロを見る</span>
+          </button>
+        )}
       </div>
+
+      <TipsModal
+        drugId={q?.drug.id ?? ''}
+        drugName={q?.drug.brandName ?? ''}
+        open={tipsOpen}
+        onClose={() => setTipsOpen(false)}
+      />
     </div>
   )
 }
