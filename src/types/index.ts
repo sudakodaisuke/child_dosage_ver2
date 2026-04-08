@@ -15,6 +15,8 @@ export interface Drug {
   ageRestriction?: string
   tags?: string[]
   reference?: string
+  isImportant?: boolean
+  memo?: string
   importedAt: number
 }
 
@@ -47,6 +49,7 @@ export interface AppSettings {
   timerSeconds: number
   showContraindications: boolean
   flashcardOrder: 'sequential' | 'shuffled' | 'wrong-first'
+  showGenericName: boolean
 }
 
 export interface StreakData {
@@ -54,6 +57,15 @@ export interface StreakData {
   longestStreak: number
   lastStudyDate: string // ISO date "YYYY-MM-DD"
   studyDates: string[]
+}
+
+// Per-drug local tip (UGC local)
+export interface DrugTip {
+  id: string
+  drugId: string
+  text: string
+  createdAt: number
+  likes: number
 }
 
 // ============================================================
@@ -67,6 +79,8 @@ export interface AppState {
   retryQueue: string[]
   settings: AppSettings
   streak: StreakData
+  favorites: string[]
+  tips: Record<string, DrugTip[]> // drugId -> tips[]
 }
 
 export type AppAction =
@@ -80,6 +94,10 @@ export type AppAction =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'UPDATE_STREAK'; payload: StreakData }
   | { type: 'RESET_ALL_PROGRESS' }
+  | { type: 'TOGGLE_FAVORITE'; payload: string }
+  | { type: 'ADD_TIP'; payload: DrugTip }
+  | { type: 'DELETE_TIP'; payload: { drugId: string; tipId: string } }
+  | { type: 'LIKE_TIP'; payload: { drugId: string; tipId: string } }
 
 // ============================================================
 // Quiz Types

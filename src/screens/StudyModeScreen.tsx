@@ -7,16 +7,31 @@ import { useAppContext } from '../store/AppContext'
 import type { Drug } from '../types'
 
 function DrugCard({ drug }: { drug: Drug }) {
+  const { state, dispatch } = useAppContext()
   const [expanded, setExpanded] = useState(false)
+  const isFav = state.favorites.includes(drug.id)
 
   return (
     <div className="card space-y-2">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-bold text-gray-900">{drug.brandName}</p>
-          <p className="text-sm text-gray-600">{drug.genericName}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            {drug.isImportant && <span className="text-yellow-500 text-sm">★</span>}
+            <p className="font-bold text-gray-900">{drug.brandName}</p>
+          </div>
+          {state.settings.showGenericName && (
+            <p className="text-sm text-gray-600">{drug.genericName}</p>
+          )}
         </div>
-        <Badge label={drug.category} className="flex-shrink-0 mt-0.5" />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => dispatch({ type: 'TOGGLE_FAVORITE', payload: drug.id })}
+            className={`text-lg leading-none ${isFav ? 'text-pink-500' : 'text-gray-300'}`}
+          >
+            {isFav ? '♥' : '♡'}
+          </button>
+          <Badge label={drug.category} className="mt-0.5" />
+        </div>
       </div>
 
       <div className="bg-primary-50 rounded-xl p-3">

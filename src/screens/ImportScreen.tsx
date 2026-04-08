@@ -77,21 +77,6 @@ export default function ImportScreen() {
     navigate('/')
   }
 
-  function downloadSampleCSV() {
-    const sample = `商品名,一般名,疾患カテゴリ,用量,投与経路,禁忌,注意事項,年齢制限,タグ,参考文献
-タミフル,オセルタミビル,感染症,2mg/kg/回 1日2回 5日間,経口,インフルエンザ脳炎禁,異常行動に注意,1歳以上,インフルエンザ,
-アモキシシリン,アモキシシリン水和物,感染症,20-40mg/kg/日 3分割,経口,ペニシリンアレルギー禁,,,感染症,
-アスベリン,チペピジンヒベンズ酸塩,呼吸器,1mg/kg/回 1日3回,経口,,,,呼吸器,
-`
-    const blob = new Blob(['\uFEFF' + sample], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'sample_drugs.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <div className="max-w-2xl mx-auto">
       <TopBar title="データインポート" />
@@ -116,6 +101,9 @@ export default function ImportScreen() {
             ファイルをドロップ、またはタップして選択
           </p>
           <p className="text-xs text-gray-500 mt-1">.csv / .xlsx / .xls</p>
+          <p className="text-xs text-gray-400 mt-2">
+            対応列: id, category, trade_name, generic_name, dosage, notes, is_important, memo
+          </p>
           <input
             ref={fileInputRef}
             type="file"
@@ -124,14 +112,6 @@ export default function ImportScreen() {
             className="hidden"
           />
         </div>
-
-        {/* Sample download */}
-        <button
-          onClick={downloadSampleCSV}
-          className="w-full btn-secondary text-sm"
-        >
-          サンプルCSVをダウンロード
-        </button>
 
         {/* Errors */}
         {errors.length > 0 && (

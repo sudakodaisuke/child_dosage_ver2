@@ -9,6 +9,7 @@ import TestModeScreen from './screens/TestModeScreen'
 import ResultsScreen from './screens/ResultsScreen'
 import StatsScreen from './screens/StatsScreen'
 import SettingsScreen from './screens/SettingsScreen'
+import MatrixScreen from './screens/MatrixScreen'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/results" element={<ResultsScreen />} />
               <Route path="/stats" element={<StatsScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
+              <Route path="/matrix" element={<MatrixScreen />} />
             </Routes>
           </div>
           <BottomNav />

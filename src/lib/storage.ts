@@ -1,4 +1,4 @@
-import type { Drug, DrugProgress, SessionRecord, AppSettings, StreakData } from '../types'
+import type { Drug, DrugProgress, SessionRecord, AppSettings, StreakData, DrugTip } from '../types'
 
 const PREFIX = 'pdda_'
 
@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   timerSeconds: 30,
   showContraindications: true,
   flashcardOrder: 'shuffled',
+  showGenericName: true,
 }
 
 const DEFAULT_STREAK: StreakData = {
@@ -66,13 +67,25 @@ export const getRetryQueue = (): string[] => get<string[]>('retry_queue', [])
 export const setRetryQueue = (ids: string[]): void => set('retry_queue', ids)
 export const clearRetryQueue = (): void => set('retry_queue', [])
 
-// Settings
-export const getSettings = (): AppSettings => get<AppSettings>('settings', DEFAULT_SETTINGS)
+// Settings – merge with defaults so new keys always exist
+export const getSettings = (): AppSettings => {
+  const saved = get<Partial<AppSettings>>('settings', {})
+  return { ...DEFAULT_SETTINGS, ...saved }
+}
 export const setSettings = (s: AppSettings): void => set('settings', s)
 
 // Streak
 export const getStreak = (): StreakData => get<StreakData>('streak', DEFAULT_STREAK)
 export const setStreak = (s: StreakData): void => set('streak', s)
+
+// Favorites
+export const getFavorites = (): string[] => get<string[]>('favorites', [])
+export const setFavorites = (ids: string[]): void => set('favorites', ids)
+
+// Tips (local UGC – per-device)
+export const getTips = (): Record<string, DrugTip[]> =>
+  get<Record<string, DrugTip[]>>('tips', {})
+export const setTips = (tips: Record<string, DrugTip[]>): void => set('tips', tips)
 
 // Reset all progress (keep drug data)
 export const resetProgress = (): void => {
@@ -89,6 +102,8 @@ export const exportAllData = () => ({
   sessions: getSessions(),
   settings: getSettings(),
   streak: getStreak(),
+  favorites: getFavorites(),
+  tips: getTips(),
   exportedAt: Date.now(),
 })
 
@@ -99,4 +114,6 @@ export const importAllData = (data: ReturnType<typeof exportAllData>): void => {
   if (data.sessions) set('sessions', data.sessions)
   if (data.settings) setSettings({ ...DEFAULT_SETTINGS, ...data.settings })
   if (data.streak) setStreak(data.streak)
+  if ((data as Record<string, unknown>).favorites) setFavorites((data as Record<string, unknown>).favorites as string[])
+  if ((data as Record<string, unknown>).tips) setTips((data as Record<string, unknown>).tips as Record<string, DrugTip[]>)
 }

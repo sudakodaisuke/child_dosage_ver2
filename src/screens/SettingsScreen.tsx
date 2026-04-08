@@ -183,14 +183,33 @@ export default function SettingsScreen() {
           )}
         </section>
 
-        {/* ===== 暗記モード ===== */}
+        {/* ===== 表示設定 ===== */}
         <section className="card space-y-3">
-          <h2 className="text-sm font-bold text-gray-700">暗記モード</h2>
+          <h2 className="text-sm font-bold text-gray-700">表示設定</h2>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-800">一般名を表示</p>
+              <p className="text-xs text-gray-500">商品名の下に一般名を表示する</p>
+            </div>
+            <button
+              onClick={() => update({ showGenericName: !settings.showGenericName })}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                settings.showGenericName ? 'bg-primary-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  settings.showGenericName ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
 
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-800">裏面に禁忌を表示</p>
-              <p className="text-xs text-gray-500">カードの裏面に禁忌情報を表示する</p>
+              <p className="text-xs text-gray-500">暗記カードの裏面に禁忌情報を表示する</p>
             </div>
             <button
               onClick={() => update({ showContraindications: !settings.showContraindications })}
@@ -205,6 +224,29 @@ export default function SettingsScreen() {
               />
             </button>
           </div>
+        </section>
+
+        {/* ===== フィードバック ===== */}
+        <section className="card space-y-3">
+          <h2 className="text-sm font-bold text-gray-700">フィードバック</h2>
+          <p className="text-xs text-gray-500">バグ報告・機能要望はこちらからどうぞ</p>
+          <a
+            href="https://forms.gle/YOUR_FORM_ID"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full btn-secondary text-sm flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            ご要望・バグ報告を送る
+          </a>
+          <button
+            onClick={() => navigate('/stats')}
+            className="w-full btn-secondary text-sm"
+          >
+            学習統計を見る
+          </button>
         </section>
 
         {/* ===== データ管理 ===== */}
@@ -338,7 +380,7 @@ export default function SettingsScreen() {
           <button
             onClick={() => {
               ;['pdda_drugs','pdda_progress','pdda_sessions','pdda_retry_queue',
-                'pdda_settings','pdda_streak'].forEach((k) => localStorage.removeItem(k))
+                'pdda_settings','pdda_streak','pdda_favorites','pdda_tips'].forEach((k) => localStorage.removeItem(k))
               window.location.href = '#/'
               window.location.reload()
             }}

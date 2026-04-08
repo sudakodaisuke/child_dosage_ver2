@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import type { AppState, AppAction } from '../types'
+import type { AppState, AppAction, DrugTip } from '../types'
 import {
   getDrugs,
   getProgress,
@@ -7,6 +7,8 @@ import {
   getRetryQueue,
   getSettings,
   getStreak,
+  getFavorites,
+  getTips,
   setDrugs,
   setProgress,
   updateDrugProgress,
@@ -14,8 +16,11 @@ import {
   setRetryQueue,
   clearRetryQueue,
   setSettings,
+  setFavorites,
+  setTips,
   resetProgress,
 } from '../lib/storage'
+import { BUILTIN_DRUGS } from '../data/drugs'
 
 const defaultSettings = getSettings()
 const defaultStreak = getStreak()
@@ -27,12 +32,13 @@ const initialState: AppState = {
   retryQueue: [],
   settings: defaultSettings,
   streak: defaultStreak,
+  favorites: [],
+  tips: {},
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'INIT':
-      // Bulk-load from storage on mount — no side-effect writes
       return { ...state, ...action.payload }
 
     case 'LOAD_DRUGS':
@@ -81,6 +87,41 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, progress: {}, sessions: [], retryQueue: [] }
     }
 
+    case 'TOGGLE_FAVORITE': {
+      const id = action.payload
+      const favs = state.favorites.includes(id)
+        ? state.favorites.filter((f) => f !== id)
+        : [...state.favorites, id]
+      setFavorites(favs)
+      return { ...state, favorites: favs }
+    }
+
+    case 'ADD_TIP': {
+      const tip: DrugTip = action.payload
+      const drugTips = [...(state.tips[tip.drugId] ?? []), tip]
+      const updated = { ...state.tips, [tip.drugId]: drugTips }
+      setTips(updated)
+      return { ...state, tips: updated }
+    }
+
+    case 'DELETE_TIP': {
+      const { drugId, tipId } = action.payload
+      const drugTips = (state.tips[drugId] ?? []).filter((t) => t.id !== tipId)
+      const updated = { ...state.tips, [drugId]: drugTips }
+      setTips(updated)
+      return { ...state, tips: updated }
+    }
+
+    case 'LIKE_TIP': {
+      const { drugId, tipId } = action.payload
+      const drugTips = (state.tips[drugId] ?? []).map((t) =>
+        t.id === tipId ? { ...t, likes: t.likes + 1 } : t
+      )
+      const updated = { ...state.tips, [drugId]: drugTips }
+      setTips(updated)
+      return { ...state, tips: updated }
+    }
+
     default:
       return state
   }
@@ -94,17 +135,26 @@ const AppContext = createContext<{
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  // Load persisted data on mount (single dispatch — no re-writes to storage)
   useEffect(() => {
+    let drugs = getDrugs()
+
+    // First launch: seed with built-in drugs
+    if (drugs.length === 0) {
+      drugs = BUILTIN_DRUGS
+      setDrugs(drugs)
+    }
+
     dispatch({
       type: 'INIT',
       payload: {
-        drugs: getDrugs(),
+        drugs,
         progress: getProgress(),
         sessions: getSessions(),
         retryQueue: getRetryQueue(),
         streak: getStreak(),
         settings: getSettings(),
+        favorites: getFavorites(),
+        tips: getTips(),
       },
     })
   }, [])

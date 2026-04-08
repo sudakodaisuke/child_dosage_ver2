@@ -13,7 +13,8 @@ export default function TestModeScreen() {
   const navigate = useNavigate()
   const { state, dispatch } = useAppContext()
 
-  const isRetry = searchParams.get('mode') === 'retry'
+  const testMode = searchParams.get('mode') // 'retry' | 'important' | 'favorites' | null
+  const isRetry = testMode === 'retry'
   const catDecoded = category ? decodeURIComponent(category) : null
 
   const questions = useMemo<QuizQuestion[]>(() => {
@@ -21,6 +22,11 @@ export default function TestModeScreen() {
     if (isRetry && state.retryQueue.length > 0) {
       const retrySet = new Set(state.retryQueue)
       pool = state.drugs.filter((d) => retrySet.has(d.id))
+    } else if (testMode === 'important') {
+      pool = state.drugs.filter((d) => d.isImportant)
+    } else if (testMode === 'favorites') {
+      const favSet = new Set(state.favorites)
+      pool = state.drugs.filter((d) => favSet.has(d.id))
     } else if (catDecoded) {
       pool = state.drugs.filter((d) => d.category === catDecoded)
     }
@@ -149,7 +155,12 @@ export default function TestModeScreen() {
   return (
     <div className="max-w-2xl mx-auto">
       <TopBar
-        title={isRetry ? '再テスト' : catDecoded ? `テスト: ${catDecoded}` : 'テストモード'}
+        title={
+          isRetry ? '要復習テスト' :
+          testMode === 'important' ? '★ 重要問題テスト' :
+          testMode === 'favorites' ? '♡ お気に入りテスト' :
+          catDecoded ? `テスト: ${catDecoded}` : 'テストモード'
+        }
         showBack
         actions={
           <span className="text-sm font-medium text-gray-500">
@@ -184,8 +195,15 @@ export default function TestModeScreen() {
         <div className="card space-y-4">
           <div className="text-center space-y-1">
             <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">用量を答えてください</div>
-            <p className="text-2xl font-bold text-gray-900">{q.drug.brandName}</p>
-            <p className="text-base text-gray-500">{q.drug.genericName}</p>
+            <div className="flex items-center justify-center gap-2">
+              {q.drug.isImportant && (
+                <span className="text-yellow-500 text-lg leading-none">★</span>
+              )}
+              <p className="text-2xl font-bold text-gray-900">{q.drug.brandName}</p>
+            </div>
+            {state.settings.showGenericName && (
+              <p className="text-base text-gray-500">{q.drug.genericName}</p>
+            )}
             {q.drug.route && (
               <span className="inline-block text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
                 {q.drug.route}

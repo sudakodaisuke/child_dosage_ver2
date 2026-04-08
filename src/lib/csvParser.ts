@@ -7,8 +7,11 @@ const HEADER_MAP: Record<string, keyof Drug> = {
   id: 'id',
   商品名: 'brandName',
   brandname: 'brandName',
+  trade_name: 'brandName',
+  tradename: 'brandName',
   一般名: 'genericName',
   genericname: 'genericName',
+  generic_name: 'genericName',
   疾患カテゴリ: 'category',
   category: 'category',
   用量: 'dosage',
@@ -27,6 +30,11 @@ const HEADER_MAP: Record<string, keyof Drug> = {
   tags: 'tags',
   参考文献: 'reference',
   reference: 'reference',
+  重要: 'isImportant',
+  is_important: 'isImportant',
+  isimportant: 'isImportant',
+  メモ: 'memo',
+  memo: 'memo',
 }
 
 function normalizeHeader(h: string): keyof Drug | null {
@@ -75,6 +83,8 @@ export function buildDrugs(
 
       if (field === 'tags') {
         drug.tags = val.split(/[,、]/).map((t) => t.trim()).filter(Boolean)
+      } else if (field === 'isImportant') {
+        drug.isImportant = val === '1' || val.toLowerCase() === 'true' || val === '○' || val === '◯'
       } else {
         // @ts-expect-error dynamic assignment
         drug[field] = val
