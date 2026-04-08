@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { isFirebaseConfigured, getDeviceId } from '../../lib/firebase'
+import { isFirebaseConfigured, ensureAuth, getDeviceId } from '../../lib/firebase'
 import {
   fetchTips,
   addTip,
@@ -18,27 +18,29 @@ interface Props {
 export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
   const [tips, setTips] = useState<FirestoreTip[]>([])
   const [loading, setLoading] = useState(false)
+  const [myId, setMyId] = useState<string>('')
   const [input, setInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const deviceId = getDeviceId()
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // 開いたときにサインイン＋チップス取得
   useEffect(() => {
     if (!open) return
+
+    // Anonymous Auth → 自分のIDを確定
+    ensureAuth().then((uid) => setMyId(uid ?? getDeviceId()))
+
     setLoading(true)
     fetchTips(drugId).then((data) => {
       setTips(data)
       setLoading(false)
     })
+
     setTimeout(() => inputRef.current?.focus(), 200)
   }, [open, drugId])
 
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [open])
 
@@ -69,8 +71,10 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-3xl w-full max-w-lg shadow-xl flex flex-col safe-bottom"
-           style={{ maxHeight: '75vh' }}>
+      <div
+        className="relative bg-white rounded-t-3xl w-full max-w-lg shadow-xl flex flex-col safe-bottom"
+        style={{ maxHeight: '75vh' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
           <div>
@@ -88,7 +92,7 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
         {!isFirebaseConfigured && (
           <div className="mx-4 my-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-xs text-yellow-800 flex-shrink-0">
             Firebaseが未設定のため共有機能は無効です。<br />
-            <code className="font-mono">src/lib/firebase.ts</code> にプロジェクト情報を入力してください。
+            <code className="font-mono">src/lib/firebase.ts</code> を設定してください。
           </div>
         )}
 
@@ -104,16 +108,11 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
             </div>
           ) : (
             tips.map((tip) => {
-              const isOwn = tip.authorId === deviceId
-              const hasLiked = tip.likedBy.includes(deviceId)
+              const isOwn = tip.authorId === myId
+              const hasLiked = tip.likedBy.includes(myId)
               return (
-                <div
-                  key={tip.id}
-                  className="bg-gray-50 rounded-2xl px-4 py-3 flex items-start gap-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 leading-relaxed">{tip.text}</p>
-                  </div>
+                <div key={tip.id} className="bg-gray-50 rounded-2xl px-4 py-3 flex items-start gap-3">
+                  <p className="flex-1 text-sm text-gray-800 leading-relaxed">{tip.text}</p>
                   <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => handleLike(tip)}

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import TopBar from '../components/layout/TopBar'
 import EmptyState from '../components/common/EmptyState'
 import Badge from '../components/common/Badge'
+import TipsModal from '../components/drug/TipsModal'
 import { useAppContext } from '../store/AppContext'
 import { shuffle, applySelfAssessment, getInitialProgress, updateStreak } from '../lib/scoring'
 import type { Drug, SelfAssessmentScore } from '../types'
@@ -21,6 +22,7 @@ function FlipCard({
   total: number
 }) {
   const [flipped, setFlipped] = useState(false)
+  const [tipsOpen, setTipsOpen] = useState(false)
 
   const handleFlip = () => setFlipped(!flipped)
 
@@ -129,6 +131,19 @@ function FlipCard({
         </div>
       )}
 
+      {flipped && (
+        <button
+          onClick={() => setTipsOpen(true)}
+          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          みんなの豆知識・ゴロを見る
+        </button>
+      )}
+
       {!flipped && (
         <button
           onClick={handleFlip}
@@ -137,6 +152,13 @@ function FlipCard({
           答えを見る
         </button>
       )}
+
+      <TipsModal
+        drugId={drug.id}
+        drugName={drug.brandName}
+        open={tipsOpen}
+        onClose={() => setTipsOpen(false)}
+      />
     </div>
   )
 }

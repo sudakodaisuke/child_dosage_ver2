@@ -1,14 +1,13 @@
 import { initializeApp, getApps } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
+import { getAuth, signInAnonymously } from 'firebase/auth'
 
 /**
  * Firebase 設定
- * ------------------------------------------
- * 1. https://console.firebase.google.com で新しいプロジェクトを作成
- * 2. プロジェクト設定 > 「ウェブアプリ」を追加
- * 3. 下記の各値をコピー＆ペーストしてください
- * 4. Firestore Database を有効化（テストモードで開始 → 後でルールを設定）
- * ------------------------------------------
+ * src/lib/firebase.ts の YOUR_* 部分をあなたのプロジェクト情報に書き換えてください。
+ *
+ * !! 投稿機能を使うには !!
+ * Firebase Console → Authentication → Sign-in method → 「匿名」を有効にしてください。
  */
 const firebaseConfig = {
   apiKey: 'AIzaSyCZQ2cqzBUugQMKvM5EaxqdmCHP6OQOp5g',
@@ -30,7 +29,33 @@ if (isFirebaseConfigured) {
 
 export { db }
 
-/** デバイスを一意に識別する匿名ID（localStorage に保存） */
+// ── Anonymous Auth ─────────────────────────────────────────
+// 1つの Promise を使い回すことで多重サインインを防ぐ
+let _authPromise: Promise<string | null> | null = null
+
+/**
+ * 匿名で Firebase にサインインし、UID を返す。
+ * 未設定の場合は null を返す（localStorage の device ID にフォールバック）。
+ */
+export function ensureAuth(): Promise<string | null> {
+  if (!isFirebaseConfigured) return Promise.resolve(null)
+
+  if (!_authPromise) {
+    _authPromise = (async () => {
+      try {
+        const auth = getAuth()
+        if (auth.currentUser) return auth.currentUser.uid
+        const { user } = await signInAnonymously(auth)
+        return user.uid
+      } catch {
+        return null
+      }
+    })()
+  }
+  return _authPromise
+}
+
+/** デバイス識別用 ID（Firebase 未設定時のフォールバック） */
 export function getDeviceId(): string {
   const KEY = 'pdda_device_id'
   let id = localStorage.getItem(KEY)

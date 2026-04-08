@@ -1,38 +1,3 @@
-/**
- * Firestore tips service
- *
- * コレクション: "tips"
- * ドキュメント: {
- *   drugId: string
- *   text: string
- *   createdAt: Timestamp
- *   likes: number
- *   likedBy: string[]   // device IDs（匿名いいね重複防止）
- *   authorId: string    // device ID（削除権限）
- * }
- *
- * Firestore セキュリティルール（推奨）:
- * ----------------------------------------
- * rules_version = '2';
- * service cloud.firestore {
- *   match /databases/{database}/documents {
- *     match /tips/{tipId} {
- *       allow read: if true;
- *       allow create: if request.resource.data.text is string
- *                     && request.resource.data.text.size() > 0
- *                     && request.resource.data.text.size() < 300
- *                     && request.resource.data.drugId is string
- *                     && request.resource.data.authorId is string;
- *       allow update: if request.resource.data.diff(resource.data)
- *                       .affectedKeys().hasOnly(['likes', 'likedBy']);
- *       allow delete: if resource.data.authorId == request.auth.uid
- *                     || true; // 匿名削除を許可する場合は true のまま
- *     }
- *   }
- * }
- * ----------------------------------------
- */
-
 import {
   collection,
   addDoc,
@@ -48,7 +13,7 @@ import {
   increment,
   serverTimestamp,
 } from 'firebase/firestore'
-import { db, getDeviceId } from './firebase'
+import { db, ensureAuth, getDeviceId } from './firebase'
 
 export interface FirestoreTip {
   id: string
@@ -58,6 +23,12 @@ export interface FirestoreTip {
   likes: number
   likedBy: string[]
   authorId: string
+}
+
+/** 現在のユーザーIDを取得（Firebase UID → localStorage fallback） */
+async function currentUserId(): Promise<string> {
+  const uid = await ensureAuth()
+  return uid ?? getDeviceId()
 }
 
 export async function fetchTips(drugId: string): Promise<FirestoreTip[]> {
@@ -81,7 +52,7 @@ export async function fetchTips(drugId: string): Promise<FirestoreTip[]> {
 
 export async function addTip(drugId: string, text: string): Promise<FirestoreTip | null> {
   if (!db) return null
-  const authorId = getDeviceId()
+  const authorId = await currentUserId()
   try {
     const ref = await addDoc(collection(db, 'tips'), {
       drugId,
@@ -91,15 +62,7 @@ export async function addTip(drugId: string, text: string): Promise<FirestoreTip
       likedBy: [],
       authorId,
     })
-    return {
-      id: ref.id,
-      drugId,
-      text,
-      createdAt: Date.now(),
-      likes: 0,
-      likedBy: [],
-      authorId,
-    }
+    return { id: ref.id, drugId, text, createdAt: Date.now(), likes: 0, likedBy: [], authorId }
   } catch {
     return null
   }
@@ -107,26 +70,22 @@ export async function addTip(drugId: string, text: string): Promise<FirestoreTip
 
 export async function deleteTip(tipId: string): Promise<void> {
   if (!db) return
-  try {
-    await deleteDoc(doc(db, 'tips', tipId))
-  } catch { /* ignore */ }
+  try { await deleteDoc(doc(db, 'tips', tipId)) } catch { /* ignore */ }
 }
 
 export async function toggleLike(tip: FirestoreTip): Promise<FirestoreTip> {
   if (!db) return tip
-  const deviceId = getDeviceId()
-  const hasLiked = tip.likedBy.includes(deviceId)
+  const userId = await currentUserId()
+  const hasLiked = tip.likedBy.includes(userId)
   try {
     await updateDoc(doc(db, 'tips', tip.id), {
       likes: increment(hasLiked ? -1 : 1),
-      likedBy: hasLiked ? arrayRemove(deviceId) : arrayUnion(deviceId),
+      likedBy: hasLiked ? arrayRemove(userId) : arrayUnion(userId),
     })
     return {
       ...tip,
       likes: tip.likes + (hasLiked ? -1 : 1),
-      likedBy: hasLiked
-        ? tip.likedBy.filter((id) => id !== deviceId)
-        : [...tip.likedBy, deviceId],
+      likedBy: hasLiked ? tip.likedBy.filter((id) => id !== userId) : [...tip.likedBy, userId],
     }
   } catch {
     return tip

@@ -1,10 +1,30 @@
 import { useNavigate } from 'react-router-dom'
 import { ReactNode } from 'react'
+import { useAppContext } from '../../store/AppContext'
 
 interface Props {
   title: string
   showBack?: boolean
   actions?: ReactNode
+}
+
+function GenericNameToggle() {
+  const { state, dispatch } = useAppContext()
+  const on = state.settings.showGenericName
+  return (
+    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+      <span className="text-xs font-medium text-gray-500">一般名</span>
+      <button
+        onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { showGenericName: !on } })}
+        className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-primary-500' : 'bg-gray-300'}`}
+        aria-label="一般名の表示切り替え"
+      >
+        <span
+          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0.5'}`}
+        />
+      </button>
+    </label>
+  )
 }
 
 export default function TopBar({ title, showBack, actions }: Props) {
@@ -27,7 +47,10 @@ export default function TopBar({ title, showBack, actions }: Props) {
           )}
           <h1 className="text-lg font-bold text-gray-900 truncate">{title}</h1>
         </div>
-        {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <GenericNameToggle />
+          {actions && <>{actions}</>}
+        </div>
       </div>
     </header>
   )
