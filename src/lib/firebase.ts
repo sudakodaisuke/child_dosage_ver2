@@ -11,14 +11,13 @@ import { getFirestore } from 'firebase/firestore'
  * ------------------------------------------
  */
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyCZQ2cqzBUugQMKvM5EaxqdmCHP6OQOp5g',
+  authDomain: 'peddose-cloude.firebaseapp.com',
+  projectId: 'peddose-cloude',
+  storageBucket: 'peddose-cloude.firebasestorage.app',
+  messagingSenderId: '653684934514',
+  appId: '1:653684934514:web:a938fd31ead7368d3cffeb',
 }
-
 export const isFirebaseConfigured =
   firebaseConfig.apiKey !== 'YOUR_API_KEY' && !!firebaseConfig.projectId
 
