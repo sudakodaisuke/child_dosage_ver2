@@ -21,6 +21,7 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
   const [myId, setMyId] = useState<string>('')
   const [input, setInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // 開いたときにサインイン＋チップス取得
@@ -48,12 +49,19 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
     const text = input.trim()
     if (!text || submitting) return
     setSubmitting(true)
-    const newTip = await addTip(drugId, text)
-    if (newTip) {
-      setTips((prev) => [newTip, ...prev])
-      setInput('')
+    setSubmitError(null)
+    try {
+      const newTip = await addTip(drugId, text)
+      if (newTip) {
+        setTips((prev) => [newTip, ...prev])
+        setInput('')
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setSubmitError('投稿に失敗しました: ' + msg)
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   async function handleLike(tip: FirestoreTip) {
@@ -72,8 +80,8 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
-        className="relative bg-white rounded-t-3xl w-full max-w-lg shadow-xl flex flex-col safe-bottom"
-        style={{ maxHeight: '75vh' }}
+        className="relative bg-white rounded-t-3xl w-full max-w-lg shadow-xl flex flex-col"
+        style={{ maxHeight: '85vh', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
@@ -139,6 +147,13 @@ export default function TipsModal({ drugId, drugName, open, onClose }: Props) {
             })
           )}
         </div>
+
+        {/* Submit error */}
+        {submitError && (
+          <div className="flex-shrink-0 mx-4 mb-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
+            {submitError}
+          </div>
+        )}
 
         {/* Input */}
         <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 flex gap-2 items-center">

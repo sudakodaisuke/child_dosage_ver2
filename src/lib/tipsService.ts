@@ -5,7 +5,6 @@ import {
   doc,
   query,
   where,
-  orderBy,
   getDocs,
   updateDoc,
   arrayUnion,
@@ -36,16 +35,18 @@ export async function fetchTips(drugId: string): Promise<FirestoreTip[]> {
   try {
     const q = query(
       collection(db, 'tips'),
-      where('drugId', '==', drugId),
-      orderBy('likes', 'desc')
+      where('drugId', '==', drugId)
     )
     const snap = await getDocs(q)
-    return snap.docs.map((d) => ({
+    const tips = snap.docs.map((d) => ({
       id: d.id,
       ...(d.data() as Omit<FirestoreTip, 'id'>),
       createdAt: d.data().createdAt?.toMillis?.() ?? Date.now(),
     }))
-  } catch {
+    // Sort client-side by likes desc, then by createdAt desc
+    return tips.sort((a, b) => b.likes - a.likes || b.createdAt - a.createdAt)
+  } catch (e) {
+    console.error('fetchTips error:', e)
     return []
   }
 }
@@ -63,8 +64,9 @@ export async function addTip(drugId: string, text: string): Promise<FirestoreTip
       authorId,
     })
     return { id: ref.id, drugId, text, createdAt: Date.now(), likes: 0, likedBy: [], authorId }
-  } catch {
-    return null
+  } catch (e) {
+    console.error('addTip error:', e)
+    throw e
   }
 }
 
