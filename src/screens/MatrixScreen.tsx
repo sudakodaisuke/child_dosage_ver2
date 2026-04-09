@@ -40,20 +40,20 @@ function DrugRow({ drug }: { drug: Drug }) {
         </div>
 
         {/* 右: アイコン */}
-        <div className="flex flex-col items-center justify-center gap-2 px-2 border-l border-gray-100 w-10">
+        <div className="flex flex-col items-center justify-center gap-3 px-2 border-l border-gray-100 w-12">
           <button
             onClick={() => setTipsOpen(true)}
             className="text-primary-400 hover:text-primary-600 transition-colors"
             aria-label="豆知識"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
           </button>
           <button
             onClick={() => dispatch({ type: 'TOGGLE_FAVORITE', payload: drug.id })}
-            className={`text-base leading-none transition-colors ${isFav ? 'text-pink-500' : 'text-gray-300 hover:text-pink-400'}`}
+            className={`text-xl leading-none transition-colors ${isFav ? 'text-pink-500' : 'text-gray-300 hover:text-pink-400'}`}
             aria-label={isFav ? 'お気に入り解除' : 'お気に入り登録'}
           >
             {isFav ? '♥' : '♡'}

@@ -8,7 +8,7 @@ import { useAppContext } from '../store/AppContext'
 import { shuffle, applySelfAssessment, getInitialProgress, updateStreak } from '../lib/scoring'
 import type { Drug, SelfAssessmentScore } from '../types'
 
-function FlipCard({
+function DrugCard({
   drug,
   showContraindications,
   onAssess,
@@ -21,14 +21,11 @@ function FlipCard({
   current: number
   total: number
 }) {
-  const [flipped, setFlipped] = useState(false)
+  const [revealed, setRevealed] = useState(false)
   const [tipsOpen, setTipsOpen] = useState(false)
 
-  const handleFlip = () => setFlipped(!flipped)
-
   const handleAssess = (score: SelfAssessmentScore) => {
-    setFlipped(false)
-    // Small delay to allow flip animation to reset before next card
+    setRevealed(false)
     setTimeout(() => onAssess(score), 50)
   }
 
@@ -48,64 +45,53 @@ function FlipCard({
         <Badge label={drug.category} />
       </div>
 
-      {/* Flip card */}
-      <div className="flip-card flex-1 min-h-0" onClick={handleFlip}>
-        <div className={`flip-card-inner w-full h-full min-h-52 ${flipped ? 'flipped' : ''}`}>
-          {/* Front */}
-          <div className="flip-card-front w-full h-full">
-            <div className="card h-full flex flex-col items-center justify-center text-center gap-4 cursor-pointer select-none">
-              <div className="text-4xl">💊</div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900 mb-1">{drug.brandName}</p>
-                <p className="text-base text-gray-500">{drug.genericName}</p>
-              </div>
-              {drug.route && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                  {drug.route}
-                </span>
-              )}
-              <p className="text-xs text-primary-500 font-medium mt-2">タップして答えを確認</p>
-            </div>
-          </div>
-
-          {/* Back */}
-          <div className="flip-card-back w-full h-full">
-            <div className="card h-full flex flex-col justify-between cursor-pointer select-none overflow-y-auto">
-              <div className="space-y-3">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-gray-900">{drug.brandName}</p>
-                  <p className="text-sm text-gray-500">{drug.genericName}</p>
-                </div>
-
-                <div className="bg-primary-50 rounded-xl p-4 text-center">
-                  <p className="text-xs font-medium text-primary-600 mb-1">用量</p>
-                  <p className="text-xl font-bold text-primary-900">{drug.dosage}</p>
-                  {drug.dosageDetail && (
-                    <p className="text-xs text-primary-700 mt-1">{drug.dosageDetail}</p>
-                  )}
-                </div>
-
-                {showContraindications && drug.contraindications && (
-                  <div className="bg-red-50 rounded-xl p-3">
-                    <p className="text-xs font-medium text-red-600 mb-1">禁忌</p>
-                    <p className="text-xs text-gray-700">{drug.contraindications}</p>
-                  </div>
-                )}
-
-                {drug.notes && (
-                  <div className="bg-orange-50 rounded-xl p-3">
-                    <p className="text-xs font-medium text-orange-600 mb-1">注意</p>
-                    <p className="text-xs text-gray-700">{drug.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+      {/* Card — always visible, answer revealed in place */}
+      <div className="card flex-1 min-h-0 flex flex-col overflow-y-auto">
+        {/* Drug name — always at top */}
+        <div className="text-center py-6 border-b border-gray-100">
+          <p className="text-2xl font-bold text-gray-900 mb-1">{drug.brandName}</p>
+          <p className="text-sm text-gray-500">{drug.genericName}</p>
+          {drug.route && (
+            <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full inline-block mt-2">
+              {drug.route}
+            </span>
+          )}
         </div>
+
+        {/* Answer section */}
+        {revealed ? (
+          <div className="space-y-3 pt-4 flex-1">
+            <div className="bg-primary-50 rounded-xl p-4 text-center">
+              <p className="text-xs font-medium text-primary-600 mb-1">用量</p>
+              <p className="text-xl font-bold text-primary-900">{drug.dosage}</p>
+              {drug.dosageDetail && (
+                <p className="text-xs text-primary-700 mt-1">{drug.dosageDetail}</p>
+              )}
+            </div>
+
+            {showContraindications && drug.contraindications && (
+              <div className="bg-red-50 rounded-xl p-3">
+                <p className="text-xs font-medium text-red-600 mb-1">禁忌</p>
+                <p className="text-xs text-gray-700">{drug.contraindications}</p>
+              </div>
+            )}
+
+            {drug.notes && (
+              <div className="bg-orange-50 rounded-xl p-3">
+                <p className="text-xs font-medium text-orange-600 mb-1">注意</p>
+                <p className="text-xs text-gray-700">{drug.notes}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-xs text-gray-400">ボタンを押して用量を確認</p>
+          </div>
+        )}
       </div>
 
-      {/* Self-assessment buttons (shown when flipped) */}
-      {flipped && (
+      {/* Self-assessment buttons (shown after reveal) */}
+      {revealed && (
         <div className="grid grid-cols-3 gap-3 mt-4">
           <button
             onClick={() => handleAssess(0)}
@@ -131,7 +117,7 @@ function FlipCard({
         </div>
       )}
 
-      {flipped && (
+      {revealed && (
         <button
           onClick={() => setTipsOpen(true)}
           className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -144,9 +130,9 @@ function FlipCard({
         </button>
       )}
 
-      {!flipped && (
+      {!revealed && (
         <button
-          onClick={handleFlip}
+          onClick={() => setRevealed(true)}
           className="mt-4 w-full btn-secondary"
         >
           答えを見る
@@ -272,7 +258,7 @@ export default function FlashcardModeScreen() {
         showBack
       />
       <div className="flex-1 p-4 flex flex-col min-h-0">
-        <FlipCard
+        <DrugCard
           key={deck[index].id + index}
           drug={deck[index]}
           showContraindications={state.settings.showContraindications}
